@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.ruff_cache/
+# Node
+node_modules/
+dist/
+coverage/
+# Secrets / local
+.env
+.env.*
+!.env.example
+.vercel/
+.DS_Store
+*.log
+*.part
+# Analysis raw HTTP payloads: potentially large
+backend/data/raw/
+# Genuine snapshots should be reviewed before commitment; files are generated during ingestion.
+# For this pilot, real normalized CSVs are intentionally allowed and SHOULD be committed for a public replayable demo.
+
+frontend/tsconfig.tsbuildinfo
+*.tsbuildinfo
+frontend/.vite/
+frontend/dist/
+.pytest_cache/

@@ -1,0 +1,37 @@
+{
+  "source": "ELEXON_FUELHH_WINDFOR",
+  "retrievedAtUTC": "2026-10-25T13:26:01.324465+00:00",
+  "decisionDays": [
+    "2026-01-01",
+    "2026-01-31"
+  ],
+  "deliveryDays": [
+    "2026-01-02",
+    "2026-02-01"
+  ],
+  "forecastPublicationSearch": [
+    "2025-12-28",
+    "2026-02-01 exclusive"
+  ],
+  "actualQuality": {
+    "retrievedRecords": 2976,
+    "duplicateTargetRows": 1440,
+    "dedupedRecords": 1488
+  },
+  "forecastQuality": {
+    "retrievedRecords": 20440,
+    "duplicateTargetPublicationRows": 0,
+    "dedupedRecords": 17864
+  },
+  "actualRows": 1488,
+  "forecastRows": 17864,
+  "sha256": {
+    "actuals.csv": "ba1c2b72a99165fb31c728b8ae49867f78974dabccacb3ac4e4f1ebda3eab898",
+    "forecasts.csv": "f48875dd0597323a26bf8997eff6bf9ce9a46469335b222846c3ec937650df5f"
+  },
+  "sourceEndpoints": [
+    "https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELHH/stream",
+    "https://data.elexon.co.uk/bmrs/api/v1/datasets/WINDFOR/stream"
+  ],
+  "notes": "Actual revisions retained by newest available revision where possible; verify FUELHH/WINDFOR scope equivalence separately. All values in MW."
+}

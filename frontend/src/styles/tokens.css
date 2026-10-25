@@ -1,0 +1,49 @@
+/*
+ * Gate design tokens.
+ * Light: sea fog, deep water, gale amber. Dark: the same sea at night.
+ * Amber is reserved for WINDFOR as published and for shortfalls.
+ */
+:root {
+  --fog: #e4e9ea; /* page ground */
+  --paper: #f2f5f5; /* raised: hour cells, inputs */
+  --ink: #13262f; /* text, outturn line */
+  --ink-soft: #3e545c; /* secondary text (6.6:1 on fog) */
+  --rule: #b7c4c7;
+  --rule-soft: #cfd8da;
+  --water: #1f5e66; /* the plan */
+  --water-tint: #c9dbdc; /* the range */
+  --amber: #b86a0e; /* WINDFOR line, over-forecast bars */
+  --amber-ink: #8a4e08; /* amber as text (5.6:1 on fog) */
+  --amber-tint: #f0dfc8;
+
+  --font: 'Commissioner Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.125rem;
+  --step-2: 1.375rem;
+  --step-hero: clamp(1.9rem, 1.2rem + 2.6vw, 3.35rem);
+
+  --page: 1180px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --radius: 6px;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fog: #0f1b20;
+    --paper: #16272e;
+    --ink: #e2eaeb;
+    --ink-soft: #9db1b6;
+    --rule: #2d444c;
+    --rule-soft: #22363d;
+    --water: #63b7bb;
+    --water-tint: #1c3d43;
+    --amber: #e39a3b;
+    --amber-ink: #eba95a;
+    --amber-tint: #3a2c19;
+    color-scheme: dark;
+  }
+}

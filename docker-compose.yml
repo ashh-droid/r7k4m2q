@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      WIND_DATA_DIR: ${WIND_DATA_DIR:-/app/data/processed}
+    volumes:
+      - ./backend/data:/app/data:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health',timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
