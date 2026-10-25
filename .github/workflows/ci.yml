@@ -11,7 +11,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Python dependencies
-        run: pip install -r backend/requirements.txt pytest
+  	run: pip install -r backend/requirements.txt pytest httpx==0.28.1
       - name: Backend tests with January snapshot
         run: python -m pytest -q
       - uses: actions/setup-node@v4
