@@ -6,7 +6,7 @@ Gate is a pilot for a Great Britain electricity utility's day-ahead procurement 
 
 **[Live application](https://r7k4m2q.vercel.app/)** · **[Source code](https://github.com/ashh-droid/r7k4m2q)** · **[Interactive API documentation](https://r7k4m2q.vercel.app/api/docs)**
 
-**Video demonstration:** [ Unlisted YouTube link to be added before submission.](https://youtu.be/sP-w30T-zRY)
+**Video demonstration:** [ Unlisted YouTube link ](https://youtu.be/sP-w30T-zRY)
 
 ![Gate day view showing the 21 January 2026 EPEX hourly scenario](assets/gate-day.png)
 
