@@ -1,118 +1,122 @@
-# Gate — Day-ahead wind, as known at the auction
+# Gate - Day-ahead wind, as known at the auction
 
-A focused pilot for a Great Britain electricity procurement team. **Gate** reconstructs the national WINDFOR forecast available before a chosen day-ahead auction and compares it with subsequent FUELHH wind output. The interface leads with the forecast, then shows its publication history and measured uncertainty.
+Gate is a pilot for a Great Britain electricity utility's day-ahead procurement team. It reconstructs the national wind forecast available before selected wholesale auction deadlines, compares it with subsequently reported wind generation, and measures the uncertainty relevant to procurement planning.
 
-**Pilot dates:** purchase decisions 1–31 January 2026; deliveries 2 January–1 February 2026.
+**Pilot scope:** purchase decisions made **1–31 January 2026**, for electricity delivery **2 January–1 February 2026**.
 
-**Live app:** add public Vercel production URL after deployment.  
-**Demo video:** add unlisted YouTube URL after recording.  
-**Repository:** public repository should have an anonymous random name.
+**[Live application](https://r7k4m2q.vercel.app/)** · **[Source code](https://github.com/ashh-droid/r7k4m2q)** · **[Interactive API documentation](https://r7k4m2q.vercel.app/api/docs)**
 
-## Start it
+**Video demonstration:** Unlisted YouTube link to be added before submission.
 
-Prerequisites: Docker Desktop with the Linux engine running (or Docker Engine + Compose).
+![Gate day view showing the 21 January 2026 EPEX hourly scenario](assets/gate-day.png)
+
+*The day view: published wind forecast, an exploratory historical adjustment, and a lower reference, with actual generation available for retrospective comparison.*
+
+## The product
+
+- **The day:** Browse delivery days and compare what WINDFOR had published before EPEX hourly (09:20), N2EX hourly (09:50), or EPEX half-hourly (15:30). Inspect the hourly forecast, a clearly labelled exploratory adjustment, and an interval informed by previous days. Reveal the eventual generation separately. The revision history identifies which updates arrived after the decision cutoff. Export the selected day as CSV.
+- **The month:** Explore how the forecast-to-actual difference varies with wind level, hour and forecast horizon. Compare published forecasts with an adjustment evaluated chronologically on later January days.
+- **How it works:** Review the forecast-selection rule, auction-time assumptions, data alignment, validation method and limitations.
+
+Only Elexon's **FUELHH (WIND)** and **WINDFOR** datasets are used; no demand, market-price or external weather data is included.
+
+## Key findings
+
+The January snapshot contains **1,488 half-hourly actual values**, **744 native hourly forecast targets**, and **17,864 retained forecast publication/target records**. For the **EPEX hourly 09:20** scenario:
+
+| Measure | Result |
+| --- | ---: |
+| Native hourly target comparisons | 744 |
+| Mean signed difference (forecast − actual) | +1,746 MW |
+| Hours with forecast above observed generation | 85% |
+| Published forecast mean absolute difference (full cohort) | 2,022 MW |
+| Walk-forward evaluation set | 552 hours across 23 days |
+| Published forecast MAE on evaluation set | 2,123 MW |
+| Wind-band adjusted MAE on same set | 1,382 MW |
+| Observed coverage of lower reference | 85.5% (below the 90% target) |
+
+The observed gap increases with forecast wind level: roughly **+0.7 GW** for forecasts below 10 GW, versus **+2.5 GW** above 14 GW. The difference could partly reflect curtailment or different wind-generation populations in the two sources. These datasets alone cannot establish the cause.
+
+For **21 January 2026**, the published EPEX-hourly forecast averaged approximately **19.4 GW**. An experimental adjustment trained on **18 earlier completed delivery days** yielded approximately **16.5 GW**, with a lower historical reference near **13.8 GW**. These figures describe a historical pilot, not a recommended trading position.
+
+## Methodology
+
+**Sources and resolution.** [Elexon FUELHH](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream) supplies half-hourly wind actuals (`fuelType=WIND`); [WINDFOR](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR/stream) supplies forecasts with hourly targets and multiple `publishTime` values. Forecasts are compared with the actual observation for the half-hour beginning on the hour. Missing values remain missing; no `:30` forecasts are invented.
+
+**Point-in-time forecast selection.** For each delivery target, Gate selects the most recent WINDFOR publication timestamp **no later than auction gate closure minus an assumed five-minute margin**. Later publications can be inspected in the revision history but never replace the forecast in the reconstructed decision. Timestamps are compared in UTC and displayed in `Europe/London`. The three auction timings are scenario settings, not a claim about any client's internal order deadline. The EPEX half-hourly setting does not change WINDFOR's hourly resolution.
+
+**Error and energy.** Signed difference is `forecast MW − actual MW`; positive values mean the forecast exceeded reported generation. MAE measures absolute differences and RMSE puts more weight on large differences. Illustrative forecast energy in GWh assumes each hourly forecast MW value represents the hourly average; observed energy sums each half-hour MW value multiplied by 0.5 hours. This is not settlement-grade trading-volume analysis.
+
+**Exploratory adjustment.** For delivery day D, Gate estimates average signed differences in three forecast-wind bands (`<10 GW`, `10–14 GW`, `>14 GW`) using only completed delivery days on or before **D−2**. It subtracts the relevant historical average from the published forecast and derives a 10th–90th percentile reference interval from previous residuals. It withholds the adjustment until at least seven earlier completed days are available. The walk-forward evaluation uses only prior days for each evaluated date, not a future-informed leave-one-day-out fit.
+
+**Limits.** The January sample is short, and the 85.5% achieved lower-reference coverage does not justify a guarantee. The FUELHH and WINDFOR populations may differ. The historical snapshot retrieved in October 2026 may contain revised actuals unavailable during the original January decisions, so the adjusted estimate is not an exact reconstruction of an operational calibration system. No consumer demand, existing positions or power prices were provided; Gate cannot determine how much electricity to purchase.
+
+## Run locally
+
+**Recommended: Docker.** From the repository root, with Docker Desktop (Linux containers) or Docker Engine and Compose installed:
 
 ```bash
 docker compose up --build
 ```
 
-Open **http://localhost:3000**. API documentation: **http://localhost:3000/api/docs**. The same URL works on Windows with Docker Desktop. The repository includes the January 2026 snapshot under `backend/data/processed`, so a reviewer can start it without first contacting Elexon.
+Open **http://localhost:3000**. FastAPI's interactive documentation is available at **http://localhost:3000/api/docs**. The January data snapshot is included, so starting the app does not require contacting Elexon.
 
-Without Docker:
+**Without Docker:** use Python 3.12 and Node.js 22. Start the backend and frontend in separate terminals.
+
+Windows PowerShell — backend:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements-ingest.txt
+.\.venv\Scripts\python.exe -m uvicorn main:app --app-dir backend --reload --port 8000
+```
+
+macOS/Linux — backend:
 
 ```bash
-# Terminal 1, repository root
-python -m venv .venv
-# Windows: .venv\Scripts\python.exe -m pip install -r backend/requirements-ingest.txt
-# macOS/Linux: .venv/bin/pip install -r backend/requirements-ingest.txt
-cd backend
-python -m uvicorn main:app --reload --port 8000
+python3.12 -m venv .venv
+./.venv/bin/python -m pip install -r backend/requirements-ingest.txt
+./.venv/bin/python -m uvicorn main:app --app-dir backend --reload --port 8000
+```
 
-# Terminal 2, repository root
+Frontend (separate terminal):
+
+```bash
 cd frontend
 npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. Vite forwards `/api` to FastAPI on port 8000.
+Open **http://localhost:5173**; Vite proxies API requests to the Python server. Run tests from the project root using the virtual-environment Python (`-m pytest -q`); run `npm run build` from `frontend/`. GitHub Actions runs backend tests and the frontend production build on pushes and pull requests.
 
-To run verification from the root:
-
-```bash
-python -m pytest -q
-cd frontend && npm ci && npm run build
-```
-
-## What it shows
-
-**The day**: select a delivery day and one of three GB auction cutoffs. Read the official forecast in a sentence, examine its 24 native hourly values and a deliberately labelled *experimental* adjustment, inspect forecast revisions, and optionally reveal observed output. Use the date ribbon and keyboard-accessible hour selectors to navigate. **Export CSV** downloads 48 half-hour actuals with forecast columns only at their native hourly target timestamps.
-
-**The month**: actual–forecast differences by wind level, the daily error pattern, forecast lead times, and a chronological holdout assessment of the adjustment.
-
-**How it works**: the auction assumption, timestamp selection, dataset coverage, and calculation limitations.
-
-The design takes its visual cues from a plain-language weather bulletin: fog background, deep-water ink, and amber reserved for the published forecast. It intentionally avoids KPI-card walls and decorative dashboard chrome.
-
-## Data and selection
-
-Only the two datasets named in the assignment are used:
-
-- [Elexon FUELHH](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream), `fuelType=WIND` — half-hourly actuals.
-- [Elexon WINDFOR](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR/stream) — hourly target forecasts with multiple `publishTime` values.
-
-For each hourly delivery target, find the **latest** forecast whose `publishTime` is no later than **gate closure minus an assumed five-minute safety margin**. Forecasts published afterwards are not used to reconstruct the decision. All timestamps are compared in UTC and displayed in `Europe/London`. The cutoffs (UK clock on D−1) are EPEX hourly **09:20**, Nord Pool N2EX hourly **09:50**, and EPEX half-hourly **15:30**. These are illustrative exchange gate scenarios, not a claim about the client's actual order-submission time. The half-hourly auction does **not** add half-hourly WINDFOR target forecasts.
-
-The 31 delivery days contain **1,488 half-hourly actual target observations** and **744 native hourly target timestamps**. WINDFOR contains **17,864** retained target/publication records in the included snapshot. Missing values remain missing, not zero; forecasts are not invented at `:30` targets. Forecast MW are summed over hourly target intervals *as an assumed average hourly output* to illustrate GWh; actual energy uses each half-hour MW × 0.5. These are assumptions, not settlement-quality energy volume calculations.
-
-The two Elexon datasets can differ in the wind assets or measurements represented. The differences shown are **differences between series**, not a proven estimate of the forecasting model's causal error. Curtailment may contribute but cannot be established using only the two allowed sources.
-
-## Exploratory adjustment — strictly historical
-
-Positive error means **WINDFOR > FUELHH**. For each delivery day D, Gate builds three wind-level bins (under 10, 10–14 and over 14 GW) using only **complete delivery days on or before D−2**. The bin's average signed difference is subtracted from the raw forecast. Historical residual quantiles form an illustrative 10th–90th percentile interval. Until seven earlier completed delivery days are available the interface shows **no correction** rather than learning from future January dates.
-
-The month page evaluates only later dates with enough prior history, a *walk-forward* test rather than leave-one-day-out with future data. These empirical coverage percentages are not guarantees and should not determine real trading positions without independent validation across seasons and consistent-generation scope.
-
-### Findings from the included snapshot
-
-| EPEX hourly 09:20 | Result |
-| --- | ---: |
-| Historical native target comparisons | 744 |
-| Mean signed difference (forecast − actual) | +1,746 MW |
-| Published forecast MAE, full cohort | 2,022 MW |
-| Walk-forward evaluated observations (23 delivery days) | 552 |
-| Walk-forward raw MAE on those observations | 2,123 MW |
-| Walk-forward trial-adjusted MAE | 1,382 MW |
-| Empirical lower-reference coverage | 85.5% (not 90%) |
-
-For delivery **21 January 2026**, the 09:20 scenario has a raw daily mean forecast of approximately **19.4 GW**; the trial adjustment using 18 earlier completed delivery days is approximately **16.5 GW**, while the lower historical reference is around **13.8 GW**. These figures are analytical outputs; the utility's demand, existing procurement and electricity prices were not supplied.
-
-## Code map
+## Project structure
 
 | Path | Responsibility |
 | --- | --- |
-| `backend/app/analytics.py` | UTC timestamps, as-of selection, error primitives |
-| `backend/app/planning.py` | Auction cutoffs, prior-only calibration, walk-forward evaluation |
+| `backend/app/analytics.py` | Timezone-aware parsing, as-of forecast selection and error statistics |
+| `backend/app/planning.py` | Auction cutoffs, prior-only wind-band adjustment and walk-forward evaluation |
 | `backend/app/main.py` | Read-only FastAPI endpoints |
-| `backend/app/schemas.py` | Pydantic contracts exposed in OpenAPI |
-| `backend/app/store.py` | Validated immutable CSV snapshot reader |
-| `backend/scripts/ingest.py` | Fetches raw Elexon endpoints and normalizes records |
-| `backend/scripts/audit.py` | Checks source, native forecast coverage and actual matches |
-| `backend/data/processed/` | The reproducible January CSVs and source metadata |
-| `backend/tests/` | Unit and real-snapshot integration tests |
-| `frontend/src/components/` | Headline, chart, date navigation, revision ledger, hourly strip |
+| `backend/app/schemas.py` | Pydantic response contracts exposed through OpenAPI |
+| `backend/app/store.py` | Loads and validates the historical CSV snapshot |
+| `backend/scripts/ingest.py` | Downloads and processes Elexon source data |
+| `backend/scripts/audit.py` | Audits completeness, native forecast resolution and alignment |
+| `backend/data/processed/` | Included January snapshot and source metadata |
+| `backend/tests/` | Backend unit and historical-data integration tests |
 | `frontend/src/views/` | Day, month and methodology views |
-| `frontend/src/styles/` | Editorial design tokens and readable responsive CSS |
-| `notebooks/analysis.ipynb` | Re-run analysis against the included snapshot |
-| `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` | Two-container local delivery |
-| `vercel.json` | Vercel Services configuration (availability must be verified in target account) |
-| `.github/workflows/ci.yml` | Python tests and frontend production build on push |
+| `frontend/src/components/` | Charts, headline, navigation, hourly strip and revision history |
+| `frontend/src/styles/`, `frontend/DESIGN.md` | Editorial design system, responsive styles and design rationale |
+| `notebooks/analysis.ipynb` | Reproducible January analysis |
+| `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile` | Reproducible local containers |
+| `frontend/nginx.conf`, `vercel.json` | Application routing and public deployment |
+| `.github/workflows/ci.yml` | Automated backend tests and frontend production build |
 
-Refresh the snapshot, if necessary, with `python backend/scripts/ingest.py`; it uses the publicly accessible Elexon API and refreshes the generated data in `backend/data/processed`. The original snapshot metadata records the original October download, including overlap counts from its old inclusive date-window implementation; the ingestion script now requests one settlement date per interval. Its old retrieval metadata has intentionally **not** been rewritten without re-fetching the source.
+To recreate the snapshot, install the ingestion requirements and run `python backend/scripts/ingest.py` from the repository root. This fetches Elexon's public endpoints. The committed snapshot preserves the data used for the published figures.
 
-## Deployment and checks
+## AI assistance
 
-`vercel.json` uses Vercel's Services configuration for the frontend/backend. Availability and build behavior must be checked on the deployment account; Docker Compose is the independently reproducible fallback. Verify production `/api/health`, `/api/meta`, `/api/day`, `/api/month`, `/api/revisions`, and `/api/docs`, then test the client in a signed-out/incognito browser. Add the actual production and unlisted-video links above before submitting the form. No GitHub repository, production URL or video is claimed to exist in this source package.
+AI tools were used in this project as permitted by the assignment:
 
-## Development disclosure
+- **OpenAI ChatGPT:** requirements analysis, initial application implementation, debugging, tests, and technical-documentation drafts.
+- **Anthropic Claude:** independent code and data review, exploration of wind-level patterns, UI design and frontend redevelopment, API improvements, tests, and README editing.
 
-OpenAI ChatGPT (GPT-6) was used for requirements research, programming assistance, code review, tests, and documentation. Additional AI-generated design critique and visual prototypes informed the visual direction. The supplied historical data are from Elexon; numerical claims were recalculated from the included snapshot. Verify the final Docker/Vercel deployment and video links independently.
+The implementation and numerical findings were reviewed through automated tests, source inspection, the included Elexon snapshot and local application checks. The historical data originates from **Elexon BMRS**.
